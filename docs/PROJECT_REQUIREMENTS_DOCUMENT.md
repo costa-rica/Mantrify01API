@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This project is a web application that allows users to create and manage their own meditation mantras. The application is built using NextJS, Express.js, and node.js services.
+This project is a web application that allows users to create and manage their own meditation mantras. The application is built using TypeScript, Express.js and will support a NextJS front end in the future.
 
 ## Build process
 
