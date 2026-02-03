@@ -96,13 +96,6 @@ This endpoint will recieve a json with a mantraArray property. Each element in t
 
 This endpoint will then send a request to the Mantrify01Queuer's POST /mantras/new endpoint with the mantraArray property. The queuer will be running locally with the base url found in the .env file's URL_MANTRIFY01QUERER variable.
 
-### POST /mantras/queuer/completed
-
-This endpoint will be called by the Mantrify01Queuer when it has completed processing a mantra. It will send a json object with the following properties:
-
-- mantra_id
-- audio_file_path
-
 ### DELETE /mantras/:id
 
 This endpoint will find the mantra in the mantras table and delete a mantra .mp3 file from the PATH_MP3_OUTPUT and after that delete the mantra from the database.
