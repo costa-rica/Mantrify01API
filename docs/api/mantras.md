@@ -332,7 +332,7 @@ curl --location 'http://localhost:3000/mantras/all?includePrivate=true' \
 
 ```json
 {
-  "mantras": [
+  "mantrasArray": [
     {
       "id": 1,
       "mantraArray": [

@@ -329,7 +329,7 @@ router.get(
       );
 
       res.status(200).json({
-        mantras: mantrasWithListens,
+        mantrasArray: mantrasWithListens,
       });
     } catch (error: any) {
       if (error instanceof AppError) {
