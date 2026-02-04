@@ -351,6 +351,96 @@ router.get(
 // Apply authentication middleware to all routes below this point
 router.use(authMiddleware);
 
+// POST /mantras/favorite/:mantraId/:trueOrFalse
+router.post(
+  "/favorite/:mantraId/:trueOrFalse",
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const mantraId = parseInt(req.params.mantraId, 10);
+      const trueOrFalse = req.params.trueOrFalse;
+
+      // Validate mantraId
+      if (isNaN(mantraId)) {
+        throw new AppError(
+          ErrorCodes.VALIDATION_ERROR,
+          "Invalid mantra ID",
+          400
+        );
+      }
+
+      // Validate trueOrFalse parameter
+      if (trueOrFalse !== "true" && trueOrFalse !== "false") {
+        throw new AppError(
+          ErrorCodes.VALIDATION_ERROR,
+          "trueOrFalse parameter must be 'true' or 'false'",
+          400
+        );
+      }
+
+      const favoriteValue = trueOrFalse === "true";
+
+      // Verify mantra exists
+      const mantra = await Mantra.findByPk(mantraId);
+      if (!mantra) {
+        throw new AppError(
+          ErrorCodes.MANTRA_NOT_FOUND,
+          "Mantra not found",
+          404
+        );
+      }
+
+      const userId = req.user!.userId;
+
+      // Find or create ContractUserMantraListen record
+      const [listenRecord, created] = await ContractUserMantraListen.findOrCreate({
+        where: {
+          userId,
+          mantraId,
+        },
+        defaults: {
+          userId,
+          mantraId,
+          listenCount: 0,
+          favorite: favoriteValue,
+        },
+      });
+
+      // If record already existed, update the favorite field
+      if (!created) {
+        await listenRecord.update({
+          favorite: favoriteValue,
+        });
+      }
+
+      logger.info(
+        `User ${userId} ${favoriteValue ? "favorited" : "unfavorited"} mantra ${mantraId}`
+      );
+
+      res.status(200).json({
+        message: `Mantra ${favoriteValue ? "favorited" : "unfavorited"} successfully`,
+        mantraId,
+        favorite: favoriteValue,
+      });
+    } catch (error: any) {
+      if (error instanceof AppError) {
+        next(error);
+      } else {
+        logger.error(
+          `Failed to update favorite for mantra ${req.params.mantraId}: ${error.message}`
+        );
+        next(
+          new AppError(
+            ErrorCodes.INTERNAL_ERROR,
+            "Failed to update favorite status",
+            500,
+            error.message
+          )
+        );
+      }
+    }
+  }
+);
+
 // POST /mantras/create
 router.post(
   "/create",

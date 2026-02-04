@@ -1,8 +1,8 @@
 # Mantras Router
 
-This router handles mantra creation, retrieval, streaming, and deletion operations.
+This router handles mantra creation, retrieval, streaming, favoriting, and deletion operations.
 
-Most endpoints require authentication via JWT access token in the Authorization header. The streaming endpoint supports optional authentication.
+Most endpoints require authentication via JWT access token in the Authorization header. The streaming and all-mantras endpoints support optional authentication.
 
 ## POST /mantras/create
 
@@ -407,6 +407,120 @@ When `includePrivate=true` is requested without authentication:
 - Listen counts are shown for all users (authenticated and anonymous)
 - All fields from the Mantras table are included in the response
 - Uses optional authentication middleware, allowing both authenticated and anonymous access
+
+## POST /mantras/favorite/:mantraId/:trueOrFalse
+
+Marks a mantra as favorited or unfavorited for the authenticated user.
+
+- Authentication: Required
+- Creates or updates the ContractUserMantraListen record for the user-mantra pair
+- If the user has never listened to the mantra, creates a new record with listenCount=0
+- If a record exists, updates only the favorite field
+
+### Parameters
+
+URL parameters:
+
+- `mantraId` (number, required): The ID of the mantra to favorite/unfavorite
+- `trueOrFalse` (string, required): Must be "true" to favorite or "false" to unfavorite
+
+### Sample Request
+
+Favorite a mantra:
+
+```bash
+curl --location --request POST 'http://localhost:3000/mantras/favorite/5/true' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+```
+
+Unfavorite a mantra:
+
+```bash
+curl --location --request POST 'http://localhost:3000/mantras/favorite/5/false' \
+--header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+```
+
+### Sample Response
+
+Success (200):
+
+```json
+{
+  "message": "Mantra favorited successfully",
+  "mantraId": 5,
+  "favorite": true
+}
+```
+
+### Error Responses
+
+#### Invalid mantra ID (400)
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid mantra ID",
+    "status": 400
+  }
+}
+```
+
+#### Invalid trueOrFalse parameter (400)
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "trueOrFalse parameter must be 'true' or 'false'",
+    "status": 400
+  }
+}
+```
+
+#### Missing or invalid token (401)
+
+```json
+{
+  "error": {
+    "code": "INVALID_TOKEN",
+    "message": "Invalid or expired token",
+    "status": 401
+  }
+}
+```
+
+#### Mantra not found (404)
+
+```json
+{
+  "error": {
+    "code": "MANTRA_NOT_FOUND",
+    "message": "Mantra not found",
+    "status": 404
+  }
+}
+```
+
+#### Internal server error (500)
+
+```json
+{
+  "error": {
+    "code": "INTERNAL_ERROR",
+    "message": "Failed to update favorite status",
+    "status": 500
+  }
+}
+```
+
+### Notes
+
+- If the user has never listened to the mantra, a new ContractUserMantraListen record is created with `listenCount=0` and `favorite` set to the requested value
+- If a record already exists, only the `favorite` field is updated
+- The user does not need to own the mantra to favorite it
+- Favoriting works for both public and private mantras (as long as they exist in the database)
+- This endpoint does not verify ownership, allowing users to favorite any mantra
 
 ## DELETE /mantras/:id
 
