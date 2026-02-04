@@ -18,6 +18,9 @@ import {
   Mantra,
   Queue,
   SoundFiles,
+  ElevenLabsFiles,
+  ContractMantrasElevenLabsFiles,
+  ContractMantrasSoundFiles,
 } from "mantrify01db";
 ```
 
@@ -134,8 +137,20 @@ const contract = await ContractUsersMantras.create({
   mantraId: mantra.id,
 });
 
+// Associate a mantra with an ElevenLabs file
+const mantraFileContract = await ContractMantrasElevenLabsFiles.create({
+  mantraId: mantra.id,
+  elevenLabsFilesId: elevenLabsFile.id,
+});
+
+// Associate a mantra with a sound file
+const mantraSoundContract = await ContractMantrasSoundFiles.create({
+  mantraId: mantra.id,
+  soundFilesId: soundFile.id,
+});
+
 // Track a listen event
-const listen = await UserMantraListen.create({
+const listen = await ContractUserMantraListen.create({
   userId: user.id,
   mantraId: mantra.id,
   listenCount: 1,
@@ -150,6 +165,21 @@ const queueItem = await Queue.create({
 
 // Find user with their mantras (using associations)
 const userWithMantras = await User.findByPk(userId, {
+  include: [{ association: "mantras" }],
+});
+
+// Find mantra with associated ElevenLabs files
+const mantraWithFiles = await Mantra.findByPk(mantraId, {
+  include: [{ association: "elevenLabsFiles" }],
+});
+
+// Find mantra with associated sound files
+const mantraWithSounds = await Mantra.findByPk(mantraId, {
+  include: [{ association: "soundFiles" }],
+});
+
+// Find sound file with associated mantras
+const soundFileWithMantras = await SoundFiles.findByPk(soundFileId, {
   include: [{ association: "mantras" }],
 });
 ```
@@ -240,8 +270,19 @@ try {
 | id       | id       | NO   | PK                         |
 | filename | filename | YES  | filename of the audio file |
 | filePath | filePath | YES  | path to the audio file     |
+| text     | string   | YES  | text content               |
 
-### Table: `UserMantraListens`
+### Table: `ContractMantrasElevenLabsFiles`
+
+#### Columns
+
+| Column            | Type              | Null | Notes                    |
+| ----------------- | ----------------- | ---- | ------------------------ |
+| id                | id                | NO   | PK                       |
+| mantraId          | mantraId          | NO   | FK → mantras.id          |
+| elevenLabsFilesId | elevenLabsFilesId | NO   | FK → elevenlabs_files.id |
+
+### Table: `ContractUserMantraListens`
 
 #### Columns
 
@@ -273,3 +314,13 @@ try {
 | name        | string | NO   |                            |
 | description | string | YES  |                            |
 | filename    | string | NO   | filename of the sound file |
+
+### Table: `ContractMantrasSoundFiles`
+
+#### Columns
+
+| Column       | Type         | Null | Notes               |
+| ------------ | ------------ | ---- | ------------------- |
+| id           | id           | NO   | PK                  |
+| mantraId     | mantraId     | NO   | FK → mantras.id     |
+| soundFilesId | soundFilesId | NO   | FK → sound_files.id |
