@@ -1,4 +1,4 @@
-# Sounds API
+# Sounds Router
 
 This router handles mantra creation, retrieval, and deletion operations.
 
