@@ -242,14 +242,15 @@ try {
 
 #### Columns
 
-| Column      | Type        | Null | Notes                      |
-| ----------- | ----------- | ---- | -------------------------- |
-| id          | id          | NO   | PK                         |
-| title       | title       | NO   | name shown in UI           |
-| description | description | YES  | public listing summary     |
-| visibility  | visibility  | NO   | default `'private'`        |
-| filename    | filename    | YES  | filename of the audio file |
-| filePath    | filePath    | YES  | path to the audio file     |
+| Column      | Type        | Null | Notes                                                              |
+| ----------- | ----------- | ---- | ------------------------------------------------------------------ |
+| id          | id          | NO   | PK                                                                 |
+| title       | title       | NO   | name shown in UI                                                   |
+| description | description | YES  | public listing summary                                             |
+| visibility  | visibility  | NO   | default `'private'`                                                |
+| filename    | filename    | YES  | filename of the audio file                                         |
+| filePath    | filePath    | YES  | path to the audio file                                             |
+| listens     | integer     | NO   | default `0`, tracks non-registered user listens for public mantras |
 
 ### Table: `ContractUsersMantras`
 
@@ -286,12 +287,13 @@ try {
 
 #### Columns
 
-| Column      | Type        | Null | Notes           |
-| ----------- | ----------- | ---- | --------------- |
-| id          | id          | NO   | PK              |
-| userId      | userId      | NO   | FK → users.id   |
-| mantraId    | mantraId    | NO   | FK → mantras.id |
-| listenCount | listenCount | NO   | set upon listen |
+| Column      | Type        | Null | Notes                           |
+| ----------- | ----------- | ---- | ------------------------------- |
+| id          | id          | NO   | PK                              |
+| userId      | userId      | NO   | FK → users.id                   |
+| mantraId    | mantraId    | NO   | FK → mantras.id                 |
+| listenCount | listenCount | NO   | set upon listen                 |
+| favorite    | boolean     | NO   | default `false`, user favorited |
 
 ### Table: `Queue`
 
