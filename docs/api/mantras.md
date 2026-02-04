@@ -294,27 +294,34 @@ const AudioPlayer = ({ mantraId, authToken }) => {
 
 Retrieves a list of mantras with aggregated listen counts.
 
-- Authentication: Required
+- Authentication: Optional (required only if includePrivate=true)
 - Returns all public mantras by default
-- Optionally includes user's private mantras when includePrivate=true
+- Optionally includes user's private mantras when includePrivate=true (requires authentication)
 - Each mantra includes a `listens` field with total listen count
+- Works for both authenticated and anonymous users
 
 ### Parameters
 
 Query parameters:
 
-- `includePrivate` (boolean, optional): Set to "true" to include user's private mantras along with public mantras
+- `includePrivate` (boolean, optional): Set to "true" to include user's private mantras along with public mantras. Requires authentication.
 
 ### Sample Request
 
-Without private mantras:
+Anonymous access (public mantras only):
+
+```bash
+curl --location 'http://localhost:3000/mantras/all'
+```
+
+Authenticated access without private mantras:
 
 ```bash
 curl --location 'http://localhost:3000/mantras/all' \
 --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
 ```
 
-With private mantras:
+Authenticated access with private mantras:
 
 ```bash
 curl --location 'http://localhost:3000/mantras/all?includePrivate=true' \
@@ -361,13 +368,15 @@ curl --location 'http://localhost:3000/mantras/all?includePrivate=true' \
 
 ### Error Responses
 
-#### Missing or invalid token (401)
+#### Authentication required for includePrivate (401)
+
+When `includePrivate=true` is requested without authentication:
 
 ```json
 {
   "error": {
-    "code": "INVALID_TOKEN",
-    "message": "Invalid or expired token",
+    "code": "AUTH_FAILED",
+    "message": "Authentication required to include private mantras",
     "status": 401
   }
 }
@@ -388,10 +397,16 @@ curl --location 'http://localhost:3000/mantras/all?includePrivate=true' \
 ### Notes
 
 - Public mantras are those where `visibility` is not "private"
-- When `includePrivate=false` or omitted, only public mantras are returned
-- When `includePrivate=true`, all public mantras plus the authenticated user's private mantras are returned
+- Anonymous users can access the endpoint and will only receive public mantras
+- When `includePrivate=false` or omitted, only public mantras are returned (works for both authenticated and anonymous users)
+- When `includePrivate=true`:
+  - Requires authentication
+  - Returns all public mantras plus the authenticated user's private mantras
+  - Anonymous users will receive a 401 error
 - The `listens` field is calculated by summing all listen counts from the `ContractUserMantraListen` table for each mantra
+- Listen counts are shown for all users (authenticated and anonymous)
 - All fields from the Mantras table are included in the response
+- Uses optional authentication middleware, allowing both authenticated and anonymous access
 
 ## DELETE /mantras/:id
 
