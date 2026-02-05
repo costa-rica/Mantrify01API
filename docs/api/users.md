@@ -312,7 +312,7 @@ Resets a user's password using a valid reset token.
 
 - Authentication: Not required
 - Token must be valid and not expired (30-minute expiration)
-- New password must be at least 6 characters
+- New password must be at least 2 characters
 - Password is hashed before storage
 
 ### Parameters
@@ -320,7 +320,7 @@ Resets a user's password using a valid reset token.
 Request body:
 
 - `token` (string, required): JWT password reset token from email
-- `newPassword` (string, required): New password (minimum 6 characters)
+- `newPassword` (string, required): New password (minimum 2 characters)
 
 ### Sample Request
 
@@ -361,7 +361,7 @@ curl --location 'http://localhost:3000/users/reset-password' \
 {
   "error": {
     "code": "VALIDATION_ERROR",
-    "message": "Password must be at least 6 characters long",
+    "message": "Password must be at least 2 characters long",
     "status": 400
   }
 }

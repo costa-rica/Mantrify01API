@@ -39,6 +39,15 @@ if (!process.env.URL_BASE_WEBSITE) {
   process.exit(1);
 }
 
+const resolveTemplatePath = (templateName: string): string => {
+  const distPath = path.resolve(__dirname, "../templates", templateName);
+  if (fs.existsSync(distPath)) {
+    return distPath;
+  }
+
+  return path.resolve(process.cwd(), "src", "templates", templateName);
+};
+
 // Send verification email
 export const sendVerificationEmail = async (
   email: string,
@@ -46,10 +55,7 @@ export const sendVerificationEmail = async (
 ): Promise<void> => {
   try {
     // Read HTML template
-    const templatePath = path.join(
-      __dirname,
-      "../templates/emailVerification.html"
-    );
+    const templatePath = resolveTemplatePath("emailVerification.html");
     let htmlTemplate = fs.readFileSync(templatePath, "utf-8");
 
     // Build verification URL (you may need to adjust this based on your frontend URL)
@@ -80,10 +86,7 @@ export const sendPasswordResetEmail = async (
 ): Promise<void> => {
   try {
     // Read HTML template
-    const templatePath = path.join(
-      __dirname,
-      "../templates/passwordReset.html"
-    );
+    const templatePath = resolveTemplatePath("passwordReset.html");
     let htmlTemplate = fs.readFileSync(templatePath, "utf-8");
 
     // Build password reset URL
