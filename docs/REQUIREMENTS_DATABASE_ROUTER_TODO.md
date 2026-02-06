@@ -1,0 +1,338 @@
+# Database Router Implementation Requirements
+
+This document outlines the implementation plan for the database backup and restore endpoints.
+
+## Overview
+
+Create a new router at `src/routes/database.ts` with 5 endpoints for managing database backups and restoration. All endpoints require authentication and admin-only access.
+
+## Environment Variables
+
+Required:
+- `PATH_PROJECT_RESOURCES`: Base path where database_backups/ directory will be created
+
+## Endpoints Summary
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| /database/create-backup | POST | Admin | Export all tables to CSV, zip folder, cleanup |
+| /database/backups-list | GET | Admin | List all backup .zip files |
+| /database/download-backup/:filename | GET | Admin | Download backup as attachment |
+| /database/delete-backup/:filename | DELETE | Admin | Delete backup file |
+| /database/replenish-database | POST | Admin | Restore database from uploaded .zip backup |
+
+## Implementation Phases
+
+### Phase 1: Setup and Middleware
+
+Tasks:
+- [ ] Create `src/modules/database/` directory
+- [ ] Create `src/modules/database/export.ts` file (table export and CSV creation)
+- [ ] Create `src/modules/database/compression.ts` file (zip/unzip operations)
+- [ ] Create `src/modules/database/import.ts` file (CSV import and table restoration)
+- [ ] Create `src/modules/database/validation.ts` file (filename validation, path security)
+- [ ] Create `src/modules/database/filesystem.ts` file (directory creation, path management)
+- [ ] Create `src/routes/database.ts` file
+- [ ] Import required dependencies (express, fs, path, archiver, csv-writer, csv-parser, multer)
+- [ ] Import database models from mantrify01db
+- [ ] Import authMiddleware and create adminMiddleware (or verify admin in routes)
+- [ ] Create router and apply authMiddleware to all routes
+- [ ] Add admin check middleware/logic
+- [ ] Register router in `src/index.ts` with `/database` path
+- [ ] Add `PATH_PROJECT_RESOURCES` to required env vars validation in `src/index.ts`
+
+### Phase 2: Helper Functions
+
+All helper functions are organized in `src/modules/database/` following the modular pattern of the codebase.
+
+#### src/modules/database/filesystem.ts
+- [ ] `ensureBackupDirectory()` - Create `database_backups/` if missing
+- [ ] `getBackupPath()` - Return full path to database_backups/
+- [ ] `generateTimestamp()` - Create YYYYMMDD_HHMMSS format timestamp
+- [ ] `cleanupDirectory(dirPath)` - Delete folder and contents
+
+#### src/modules/database/validation.ts
+- [ ] `validateFilename(filename)` - Check for path traversal attacks (../, absolute paths)
+- [ ] `validateZipExtension(filename)` - Ensure filename ends with .zip
+- [ ] `sanitizeFilename(filename)` - Remove dangerous characters
+
+#### src/modules/database/export.ts
+- [ ] `getAllTables()` - Return list of all Sequelize models/tables
+- [ ] `exportTableToCSV(tableName, outputPath)` - Export single table to CSV with headers
+- [ ] `createBackup()` - Orchestrate full backup process (export all tables)
+
+#### src/modules/database/compression.ts
+- [ ] `zipDirectory(sourceDir, outPath)` - Zip directory using archiver
+- [ ] `extractZip(zipPath, extractPath)` - Extract zip file for restore
+
+#### src/modules/database/import.ts
+- [ ] `importCSVToTable(csvPath, tableName)` - Import single CSV to table
+- [ ] `restoreFromBackup(extractedPath)` - Orchestrate full restore process (import all CSVs)
+- [ ] `parseCSVRow(row, tableName)` - Parse CSV row with NULL handling
+
+### Phase 3: POST /database/create-backup
+
+Tasks:
+- [ ] Validate user is authenticated and admin
+- [ ] Check PATH_PROJECT_RESOURCES env var exists
+- [ ] Call `ensureBackupDirectory()` to create database_backups/ if needed
+- [ ] Generate timestamp using `generateTimestamp()`
+- [ ] Create backup folder name: `database_backup_${timestamp}`
+- [ ] Create full backup folder path inside database_backups/
+- [ ] Get list of all tables from database
+- [ ] If no tables exist, throw error with AppError
+- [ ] Loop through each table and export to CSV:
+  - Name CSV file as `${tableName}.csv`
+  - Include column headers in CSV
+  - Represent NULL values as empty strings (standard CSV convention)
+  - Log which table is being exported
+  - If export fails, log error with table name and throw
+- [ ] After all CSVs created, zip the backup folder
+- [ ] Name zip file: `database_backup_${timestamp}.zip`
+- [ ] If zipping fails, delete any partial files and throw error
+- [ ] If zipping succeeds, delete original backup folder
+- [ ] Delete any non-.zip files in case of partial failure
+- [ ] Return success response with backup filename and path
+- [ ] Add comprehensive error handling with proper logging
+
+### Phase 4: GET /database/backups-list
+
+Tasks:
+- [ ] Validate user is authenticated and admin
+- [ ] Check PATH_PROJECT_RESOURCES env var exists
+- [ ] Get path to database_backups/ directory
+- [ ] Check if directory exists; if not, return empty array
+- [ ] Read all files in database_backups/ directory
+- [ ] Filter to only .zip files
+- [ ] Get file stats (size, creation date) for each backup
+- [ ] Sort by creation date (newest first)
+- [ ] Return array of backup files with metadata:
+  - filename
+  - size (in bytes or MB)
+  - createdAt (timestamp)
+- [ ] Add error handling and logging
+
+### Phase 5: GET /database/download-backup/:filename
+
+Tasks:
+- [ ] Validate user is authenticated and admin
+- [ ] Extract :filename param from request
+- [ ] Validate filename includes .zip extension
+- [ ] Validate filename against path traversal attacks (no ../, absolute paths, etc.)
+- [ ] Check PATH_PROJECT_RESOURCES env var exists
+- [ ] Construct full path to backup file
+- [ ] Check if file exists; if not, return 404
+- [ ] Verify file is actually a file (not directory)
+- [ ] Set response headers:
+  - Content-Type: application/zip
+  - Content-Disposition: attachment; filename="${filename}"
+  - Content-Length: file size
+- [ ] Stream file to response using fs.createReadStream
+- [ ] Add error handling for file read errors
+- [ ] Log download event with admin user ID and filename
+
+### Phase 6: DELETE /database/delete-backup/:filename
+
+Tasks:
+- [ ] Validate user is authenticated and admin
+- [ ] Extract :filename param from request
+- [ ] Validate filename includes .zip extension
+- [ ] Validate filename against path traversal attacks
+- [ ] Check PATH_PROJECT_RESOURCES env var exists
+- [ ] Construct full path to backup file
+- [ ] Check if file exists; if not, return 404
+- [ ] Verify file is actually a file (not directory)
+- [ ] Delete the file using fs.unlinkSync or fs.promises.unlink
+- [ ] If deletion fails, log error and throw AppError
+- [ ] Return success response with deleted filename
+- [ ] Log deletion event with admin user ID and filename
+
+### Phase 7: POST /database/replenish-database
+
+Tasks:
+- [ ] Validate user is authenticated and admin
+- [ ] Set up multer middleware for file upload (accept .zip only)
+- [ ] Validate uploaded file exists
+- [ ] Validate uploaded file is a .zip file
+- [ ] Create temporary extraction directory with unique name
+- [ ] Extract .zip file to temporary directory
+- [ ] Read all .csv files from extracted directory
+- [ ] For each CSV file:
+  - Parse filename to determine table name (remove .csv extension)
+  - Validate table exists in database
+  - Read CSV with headers
+  - Parse each row and insert into database
+  - Handle NULL values (empty strings -> null)
+  - Log progress (e.g., "Importing X rows into TableName")
+  - If import fails, log which table/row failed
+- [ ] Use transaction for all imports (rollback on failure)
+- [ ] After successful import, cleanup temporary directory
+- [ ] Delete uploaded .zip file
+- [ ] Return success response with:
+  - Number of tables imported
+  - Number of rows imported per table
+  - Total rows imported
+- [ ] Add comprehensive error handling:
+  - Invalid zip file
+  - Missing CSV files
+  - Table doesn't exist
+  - CSV format errors
+  - Database insert errors
+- [ ] Log all steps of restoration process
+
+### Phase 8: Documentation
+
+Tasks:
+- [ ] Create `docs/api/database.md` with endpoint documentation
+- [ ] Document each endpoint with:
+  - Description
+  - Authentication requirements (admin only)
+  - Request format (body/params)
+  - Response format
+  - Error responses
+  - Sample requests (curl examples)
+- [ ] Add notes about:
+  - Backup file naming convention
+  - CSV format (headers, NULL handling)
+  - Path traversal security
+  - Transaction handling in replenish
+- [ ] Update main API documentation to reference database endpoints
+
+### Phase 9: Testing and Validation
+
+Tasks:
+- [ ] Test create-backup with empty database
+- [ ] Test create-backup with populated database
+- [ ] Test create-backup when PATH_PROJECT_RESOURCES is missing
+- [ ] Test create-backup when disk space is full (error handling)
+- [ ] Test backups-list with no backups
+- [ ] Test backups-list with multiple backups
+- [ ] Test download-backup with valid filename
+- [ ] Test download-backup with invalid filename (404)
+- [ ] Test download-backup with path traversal attempts (security)
+- [ ] Test delete-backup with valid filename
+- [ ] Test delete-backup with invalid filename (404)
+- [ ] Test delete-backup with path traversal attempts (security)
+- [ ] Test replenish-database with valid backup
+- [ ] Test replenish-database with corrupted zip
+- [ ] Test replenish-database with missing CSV files
+- [ ] Test replenish-database with invalid table names
+- [ ] Test replenish-database transaction rollback on failure
+- [ ] Test all endpoints without authentication (401)
+- [ ] Test all endpoints with non-admin user (403)
+- [ ] Run build and verify no TypeScript errors
+
+## Technical Details
+
+### CSV Format
+- First row contains column headers (exact column names from database)
+- NULL values represented as empty strings
+- Standard CSV escaping for special characters (quotes, commas, newlines)
+- UTF-8 encoding
+
+### Backup File Structure
+```
+database_backup_20260206_143022/
+├── Users.csv
+├── Mantras.csv
+├── ContractUsersMantras.csv
+├── ContractUserMantraListen.csv
+├── ElevenLabsFiles.csv
+├── Queue.csv
+├── SoundFiles.csv
+├── ContractMantrasElevenLabsFiles.csv
+└── ContractMantrasSoundFiles.csv
+```
+
+After zipping: `database_backup_20260206_143022.zip`
+
+### Tables to Export/Import
+1. Users
+2. Mantras
+3. ContractUsersMantras
+4. ContractUserMantraListen
+5. ElevenLabsFiles
+6. Queue
+7. SoundFiles
+8. ContractMantrasElevenLabsFiles
+9. ContractMantrasSoundFiles
+
+### Security Considerations
+- All endpoints require admin authentication
+- Path traversal validation on filename params
+- File type validation on uploads
+- Sanitize filenames to prevent command injection
+- Use transactions for database restoration
+- Log all database operations with admin user ID
+
+### Dependencies to Install
+```bash
+npm install archiver csv-writer csv-parser multer
+npm install --save-dev @types/archiver @types/multer
+```
+
+## Error Codes
+
+Add to `src/modules/errorHandler.ts`:
+- `ADMIN_REQUIRED`: User is not an admin
+- `BACKUP_FAILED`: Backup creation failed
+- `BACKUP_NOT_FOUND`: Backup file not found
+- `INVALID_FILENAME`: Invalid or malicious filename
+- `RESTORE_FAILED`: Database restoration failed
+- `INVALID_BACKUP_FILE`: Backup file is corrupted or invalid
+
+## Success Response Formats
+
+### POST /database/create-backup
+```json
+{
+  "message": "Database backup created successfully",
+  "filename": "database_backup_20260206_143022.zip",
+  "path": "/path/to/database_backups/database_backup_20260206_143022.zip",
+  "tablesExported": 9,
+  "timestamp": "20260206_143022"
+}
+```
+
+### GET /database/backups-list
+```json
+{
+  "backups": [
+    {
+      "filename": "database_backup_20260206_143022.zip",
+      "size": 1024000,
+      "sizeFormatted": "1.02 MB",
+      "createdAt": "2026-02-06T14:30:22.000Z"
+    }
+  ],
+  "count": 1
+}
+```
+
+### DELETE /database/delete-backup/:filename
+```json
+{
+  "message": "Backup deleted successfully",
+  "filename": "database_backup_20260206_143022.zip"
+}
+```
+
+### POST /database/replenish-database
+```json
+{
+  "message": "Database restored successfully",
+  "tablesImported": 9,
+  "rowsImported": {
+    "Users": 5,
+    "Mantras": 12,
+    "ContractUsersMantras": 15,
+    "ContractUserMantraListen": 8,
+    "ElevenLabsFiles": 20,
+    "Queue": 3,
+    "SoundFiles": 10,
+    "ContractMantrasElevenLabsFiles": 25,
+    "ContractMantrasSoundFiles": 18
+  },
+  "totalRows": 116
+}
+```
