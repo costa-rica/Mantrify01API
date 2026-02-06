@@ -13,6 +13,11 @@ import {
 } from "../modules/database/filesystem";
 import { createBackup, getAllTables } from "../modules/database/export";
 import { zipDirectory } from "../modules/database/compression";
+import {
+  validateFilename,
+  validateZipExtension,
+  sanitizeFilename,
+} from "../modules/database/validation";
 
 const router = Router();
 
@@ -243,11 +248,65 @@ router.get(
         `Admin user ${req.user?.userId} requested backup download: ${filename}`,
       );
 
-      // Implementation in Phase 5
-      res.status(200).json({
-        message: "Download backup endpoint - implementation pending",
-        filename,
+      validateZipExtension(filename);
+      validateFilename(filename);
+
+      const projectResourcesPath = process.env.PATH_PROJECT_RESOURCES;
+      if (!projectResourcesPath) {
+        throw new AppError(
+          ErrorCodes.INTERNAL_ERROR,
+          "PATH_PROJECT_RESOURCES is not configured",
+          500,
+        );
+      }
+
+      const sanitizedFilename = sanitizeFilename(filename);
+      const backupPath = getBackupPath();
+      const filePath = path.join(backupPath, sanitizedFilename);
+
+      if (!fs.existsSync(filePath)) {
+        throw new AppError(
+          ErrorCodes.BACKUP_NOT_FOUND,
+          "Backup file not found",
+          404,
+        );
+      }
+
+      const fileStats = fs.statSync(filePath);
+      if (!fileStats.isFile()) {
+        throw new AppError(
+          ErrorCodes.BACKUP_NOT_FOUND,
+          "Backup file not found",
+          404,
+        );
+      }
+
+      res.setHeader("Content-Type", "application/zip");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${sanitizedFilename}"`,
+      );
+      res.setHeader("Content-Length", fileStats.size.toString());
+
+      const readStream = fs.createReadStream(filePath);
+      readStream.on("error", (error) => {
+        logger.error(
+          `Failed to stream backup file ${sanitizedFilename}: ${error.message}`,
+        );
+        next(
+          new AppError(
+            ErrorCodes.BACKUP_NOT_FOUND,
+            "Failed to download backup",
+            500,
+            error.message,
+          ),
+        );
       });
+
+      readStream.pipe(res);
+      logger.info(
+        `Backup downloaded by admin ${req.user?.userId}: ${sanitizedFilename}`,
+      );
     } catch (error: any) {
       if (error instanceof AppError) {
         next(error);

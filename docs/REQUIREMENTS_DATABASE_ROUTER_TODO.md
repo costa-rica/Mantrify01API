@@ -115,21 +115,21 @@ Tasks:
 ### Phase 5: GET /database/download-backup/:filename
 
 Tasks:
-- [ ] Validate user is authenticated and admin
-- [ ] Extract :filename param from request
-- [ ] Validate filename includes .zip extension
-- [ ] Validate filename against path traversal attacks (no ../, absolute paths, etc.)
-- [ ] Check PATH_PROJECT_RESOURCES env var exists
-- [ ] Construct full path to backup file
-- [ ] Check if file exists; if not, return 404
-- [ ] Verify file is actually a file (not directory)
-- [ ] Set response headers:
+- [x] Validate user is authenticated and admin
+- [x] Extract :filename param from request
+- [x] Validate filename includes .zip extension
+- [x] Validate filename against path traversal attacks (no ../, absolute paths, etc.)
+- [x] Check PATH_PROJECT_RESOURCES env var exists
+- [x] Construct full path to backup file
+- [x] Check if file exists; if not, return 404
+- [x] Verify file is actually a file (not directory)
+- [x] Set response headers:
   - Content-Type: application/zip
   - Content-Disposition: attachment; filename="${filename}"
   - Content-Length: file size
-- [ ] Stream file to response using fs.createReadStream
-- [ ] Add error handling for file read errors
-- [ ] Log download event with admin user ID and filename
+- [x] Stream file to response using fs.createReadStream
+- [x] Add error handling for file read errors
+- [x] Log download event with admin user ID and filename
 
 ### Phase 6: DELETE /database/delete-backup/:filename
 
