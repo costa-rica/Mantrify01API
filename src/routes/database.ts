@@ -501,15 +501,46 @@ router.post(
 
         await extractZip(uploadedFilePath, extractionDir);
 
-        const topEntries = await fs.promises.readdir(extractionDir);
-        let csvRoot = extractionDir;
+        const findCsvRoot = async (rootPath: string): Promise<string | null> => {
+          const entries = await fs.promises.readdir(rootPath, {
+            withFileTypes: true,
+          });
 
-        if (topEntries.length === 1) {
-          const possibleRoot = path.join(extractionDir, topEntries[0]);
-          const stats = await fs.promises.stat(possibleRoot);
-          if (stats.isDirectory()) {
-            csvRoot = possibleRoot;
+          const csvInRoot = entries
+            .filter((entry) => entry.isFile() && entry.name.endsWith(".csv"))
+            .map((entry) => entry.name);
+
+          if (csvInRoot.length > 0) {
+            return rootPath;
           }
+
+          const subdirs = entries
+            .filter((entry) => entry.isDirectory())
+            .map((entry) => entry.name);
+
+          for (const subdir of subdirs) {
+            const candidate = path.join(rootPath, subdir);
+            const nestedEntries = await fs.promises.readdir(candidate, {
+              withFileTypes: true,
+            });
+            const csvInSubdir = nestedEntries
+              .filter((entry) => entry.isFile() && entry.name.endsWith(".csv"))
+              .map((entry) => entry.name);
+            if (csvInSubdir.length > 0) {
+              return candidate;
+            }
+          }
+
+          return null;
+        };
+
+        const csvRoot = await findCsvRoot(extractionDir);
+        if (!csvRoot) {
+          throw new AppError(
+            ErrorCodes.INVALID_BACKUP_FILE,
+            "No CSV files found in backup",
+            400,
+          );
         }
 
         const csvFiles = (await fs.promises.readdir(csvRoot)).filter((entry) =>
