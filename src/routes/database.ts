@@ -9,6 +9,7 @@ import {
   ensureBackupDirectory,
   generateTimestamp,
   cleanupDirectory,
+  getBackupPath,
 } from "../modules/database/filesystem";
 import { createBackup, getAllTables } from "../modules/database/export";
 import { zipDirectory } from "../modules/database/compression";
@@ -146,9 +147,73 @@ router.get(
         `Admin user ${req.user?.userId} requested backup list`,
       );
 
-      // Implementation in Phase 4
+      const projectResourcesPath = process.env.PATH_PROJECT_RESOURCES;
+      if (!projectResourcesPath) {
+        throw new AppError(
+          ErrorCodes.INTERNAL_ERROR,
+          "PATH_PROJECT_RESOURCES is not configured",
+          500,
+        );
+      }
+
+      const backupPath = getBackupPath();
+
+      if (!fs.existsSync(backupPath)) {
+        res.status(200).json({
+          backups: [],
+          count: 0,
+        });
+        return;
+      }
+
+      const formatSize = (bytes: number): string => {
+        if (bytes < 1024) {
+          return `${bytes} B`;
+        }
+
+        const units = ["KB", "MB", "GB", "TB"];
+        let size = bytes / 1024;
+        let unitIndex = 0;
+
+        while (size >= 1024 && unitIndex < units.length - 1) {
+          size /= 1024;
+          unitIndex += 1;
+        }
+
+        return `${size.toFixed(2)} ${units[unitIndex]}`;
+      };
+
+      const entries = await fs.promises.readdir(backupPath);
+      const backupFiles = entries.filter((entry) => entry.endsWith(".zip"));
+
+      const backups = await Promise.all(
+        backupFiles.map(async (filename) => {
+          const fullPath = path.join(backupPath, filename);
+          const stats = await fs.promises.stat(fullPath);
+
+          if (!stats.isFile()) {
+            return null;
+          }
+
+          return {
+            filename,
+            size: stats.size,
+            sizeFormatted: formatSize(stats.size),
+            createdAt: stats.birthtime.toISOString(),
+          };
+        }),
+      );
+
+      const filteredBackups = backups
+        .filter((backup): backup is NonNullable<typeof backup> => backup !== null)
+        .sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+
       res.status(200).json({
-        message: "Backups list endpoint - implementation pending",
+        backups: filteredBackups,
+        count: filteredBackups.length,
       });
     } catch (error: any) {
       if (error instanceof AppError) {

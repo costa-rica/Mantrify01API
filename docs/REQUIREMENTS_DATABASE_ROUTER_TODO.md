@@ -98,19 +98,19 @@ Tasks:
 ### Phase 4: GET /database/backups-list
 
 Tasks:
-- [ ] Validate user is authenticated and admin
-- [ ] Check PATH_PROJECT_RESOURCES env var exists
-- [ ] Get path to database_backups/ directory
-- [ ] Check if directory exists; if not, return empty array
-- [ ] Read all files in database_backups/ directory
-- [ ] Filter to only .zip files
-- [ ] Get file stats (size, creation date) for each backup
-- [ ] Sort by creation date (newest first)
-- [ ] Return array of backup files with metadata:
+- [x] Validate user is authenticated and admin
+- [x] Check PATH_PROJECT_RESOURCES env var exists
+- [x] Get path to database_backups/ directory
+- [x] Check if directory exists; if not, return empty array
+- [x] Read all files in database_backups/ directory
+- [x] Filter to only .zip files
+- [x] Get file stats (size, creation date) for each backup
+- [x] Sort by creation date (newest first)
+- [x] Return array of backup files with metadata:
   - filename
   - size (in bytes or MB)
   - createdAt (timestamp)
-- [ ] Add error handling and logging
+- [x] Add error handling and logging
 
 ### Phase 5: GET /database/download-backup/:filename
 
