@@ -18,6 +18,7 @@ import usersRouter from "./routes/users";
 import mantrasRouter from "./routes/mantras";
 import soundsRouter from "./routes/sounds";
 import adminRouter from "./routes/admin";
+import databaseRouter from "./routes/database";
 
 // Import error handlers
 import { errorHandler, notFoundHandler } from "./modules/errorHandler";
@@ -37,6 +38,7 @@ import { runStartupChecks } from "./modules/onStartUp";
       "PATH_MP3_OUTPUT",
       "PATH_MP3_SOUND_FILES",
       "URL_MANTRIFY01QUEUER",
+      "PATH_PROJECT_RESOURCES",
     ];
 
     const missingVars = requiredVars.filter((varName) => !process.env[varName]);
@@ -73,6 +75,7 @@ import { runStartupChecks } from "./modules/onStartUp";
     app.use("/mantras", mantrasRouter);
     app.use("/sounds", soundsRouter);
     app.use("/admin", adminRouter);
+    app.use("/database", databaseRouter);
 
     // 404 handler for unknown routes
     app.use(notFoundHandler);

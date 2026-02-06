@@ -26,38 +26,38 @@ Required:
 ### Phase 1: Setup and Middleware
 
 Tasks:
-- [ ] Create `src/modules/database/` directory
-- [ ] Create `src/modules/database/export.ts` file (table export and CSV creation)
-- [ ] Create `src/modules/database/compression.ts` file (zip/unzip operations)
-- [ ] Create `src/modules/database/import.ts` file (CSV import and table restoration)
-- [ ] Create `src/modules/database/validation.ts` file (filename validation, path security)
-- [ ] Create `src/modules/database/filesystem.ts` file (directory creation, path management)
-- [ ] Create `src/routes/database.ts` file
-- [ ] Import required dependencies (express, fs, path, archiver, csv-writer, csv-parser, multer)
-- [ ] Import database models from mantrify01db
-- [ ] Import authMiddleware and create adminMiddleware (or verify admin in routes)
-- [ ] Create router and apply authMiddleware to all routes
-- [ ] Add admin check middleware/logic
-- [ ] Register router in `src/index.ts` with `/database` path
-- [ ] Add `PATH_PROJECT_RESOURCES` to required env vars validation in `src/index.ts`
+- [x] Create `src/modules/database/` directory
+- [x] Create `src/modules/database/export.ts` file (table export and CSV creation)
+- [x] Create `src/modules/database/compression.ts` file (zip/unzip operations)
+- [x] Create `src/modules/database/import.ts` file (CSV import and table restoration)
+- [x] Create `src/modules/database/validation.ts` file (filename validation, path security)
+- [x] Create `src/modules/database/filesystem.ts` file (directory creation, path management)
+- [x] Create `src/routes/database.ts` file
+- [ ] Install required dependencies (archiver, csv-writer, csv-parser, multer)
+- [x] Import database models from mantrify01db
+- [x] Import authMiddleware and create adminMiddleware (or verify admin in routes)
+- [x] Create router and apply authMiddleware to all routes
+- [x] Add admin check middleware/logic
+- [x] Register router in `src/index.ts` with `/database` path
+- [x] Add `PATH_PROJECT_RESOURCES` to required env vars validation in `src/index.ts`
 
 ### Phase 2: Helper Functions
 
 All helper functions are organized in `src/modules/database/` following the modular pattern of the codebase.
 
 #### src/modules/database/filesystem.ts
-- [ ] `ensureBackupDirectory()` - Create `database_backups/` if missing
-- [ ] `getBackupPath()` - Return full path to database_backups/
-- [ ] `generateTimestamp()` - Create YYYYMMDD_HHMMSS format timestamp
-- [ ] `cleanupDirectory(dirPath)` - Delete folder and contents
+- [x] `ensureBackupDirectory()` - Create `database_backups/` if missing
+- [x] `getBackupPath()` - Return full path to database_backups/
+- [x] `generateTimestamp()` - Create YYYYMMDD_HHMMSS format timestamp
+- [x] `cleanupDirectory(dirPath)` - Delete folder and contents
 
 #### src/modules/database/validation.ts
-- [ ] `validateFilename(filename)` - Check for path traversal attacks (../, absolute paths)
-- [ ] `validateZipExtension(filename)` - Ensure filename ends with .zip
-- [ ] `sanitizeFilename(filename)` - Remove dangerous characters
+- [x] `validateFilename(filename)` - Check for path traversal attacks (../, absolute paths)
+- [x] `validateZipExtension(filename)` - Ensure filename ends with .zip
+- [x] `sanitizeFilename(filename)` - Remove dangerous characters
 
 #### src/modules/database/export.ts
-- [ ] `getAllTables()` - Return list of all Sequelize models/tables
+- [x] `getAllTables()` - Return list of all Sequelize models/tables
 - [ ] `exportTableToCSV(tableName, outputPath)` - Export single table to CSV with headers
 - [ ] `createBackup()` - Orchestrate full backup process (export all tables)
 
