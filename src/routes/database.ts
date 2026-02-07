@@ -591,17 +591,32 @@ router.post(
         }
         throw error;
       } finally {
+        // Skip cleanup in development mode to allow manual inspection of files
+        const isDevelopment = process.env.NODE_ENV === "development";
+
         if (extractionDir) {
-          cleanupDirectory(extractionDir);
+          if (isDevelopment) {
+            logger.info(
+              `Development mode: preserving extraction directory at ${extractionDir}`,
+            );
+          } else {
+            cleanupDirectory(extractionDir);
+          }
         }
 
         if (fs.existsSync(uploadedFilePath)) {
-          try {
-            await fs.promises.unlink(uploadedFilePath);
-          } catch (cleanupError: any) {
-            logger.warn(
-              `Failed to remove uploaded backup file ${uploadedFilePath}: ${cleanupError.message}`,
+          if (isDevelopment) {
+            logger.info(
+              `Development mode: preserving uploaded file at ${uploadedFilePath}`,
             );
+          } else {
+            try {
+              await fs.promises.unlink(uploadedFilePath);
+            } catch (cleanupError: any) {
+              logger.warn(
+                `Failed to remove uploaded backup file ${uploadedFilePath}: ${cleanupError.message}`,
+              );
+            }
           }
         }
       }

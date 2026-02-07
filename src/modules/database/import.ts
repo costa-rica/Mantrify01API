@@ -61,15 +61,25 @@ export async function importCSVToTable(
           logger.info(`Imported ${rows.length} rows into ${tableName}`);
           resolve(rows.length);
         } catch (error: any) {
+          // Log detailed error information for debugging
+          const errorMessage = error.message || error.toString() || "Unknown error";
+          const errorDetails = error.errors
+            ? JSON.stringify(error.errors, null, 2)
+            : "";
+
           logger.error(
-            `Failed to import CSV to ${tableName}: ${error.message}`,
+            `Failed to import CSV to ${tableName}: ${errorMessage}`,
           );
+          if (errorDetails) {
+            logger.error(`Validation errors: ${errorDetails}`);
+          }
+
           reject(
             new AppError(
               ErrorCodes.RESTORE_FAILED,
               `Failed to import data to ${tableName}`,
               500,
-              error.message,
+              errorMessage,
             ),
           );
         }
