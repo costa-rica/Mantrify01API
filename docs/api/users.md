@@ -8,7 +8,7 @@ Creates a new user account and sends a verification email.
 
 - Authentication: Not required
 - Email addresses are normalized to lowercase
-- Password must be at least 6 characters
+- Password must be at least 4 characters
 - User account is created with `isEmailVerified: false`
 - Verification token expires in 30 minutes
 
@@ -17,7 +17,7 @@ Creates a new user account and sends a verification email.
 Request body:
 
 - `email` (string, required): User's email address
-- `password` (string, required): User's password (minimum 6 characters)
+- `password` (string, required): User's password (minimum 4 characters)
 
 ### Sample Request
 
@@ -71,7 +71,7 @@ curl --location 'http://localhost:3000/users/register' \
 {
   "error": {
     "code": "VALIDATION_ERROR",
-    "message": "Password must be at least 6 characters long",
+    "message": "Password must be at least 4 characters long",
     "status": 400
   }
 }

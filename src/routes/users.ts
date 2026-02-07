@@ -41,10 +41,10 @@ router.post(
       }
 
       // Validate password length
-      if (password.length < 6) {
+      if (password.length < 4) {
         throw new AppError(
           ErrorCodes.VALIDATION_ERROR,
-          "Password must be at least 6 characters long",
+          "Password must be at least 4 characters long",
           400
         );
       }
