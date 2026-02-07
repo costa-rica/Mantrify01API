@@ -46,7 +46,8 @@ Success (200):
       "emailVerifiedAt": "2026-02-01T10:30:00.000Z",
       "isAdmin": true,
       "createdAt": "2026-02-01T10:00:00.000Z",
-      "updatedAt": "2026-02-01T10:30:00.000Z"
+      "updatedAt": "2026-02-01T10:30:00.000Z",
+      "hasPublicMantras": false
     },
     {
       "id": 2,
@@ -55,7 +56,8 @@ Success (200):
       "emailVerifiedAt": "2026-02-02T14:20:00.000Z",
       "isAdmin": false,
       "createdAt": "2026-02-02T14:15:00.000Z",
-      "updatedAt": "2026-02-02T14:20:00.000Z"
+      "updatedAt": "2026-02-02T14:20:00.000Z",
+      "hasPublicMantras": true
     },
     {
       "id": 3,
@@ -64,7 +66,8 @@ Success (200):
       "emailVerifiedAt": null,
       "isAdmin": false,
       "createdAt": "2026-02-03T09:00:00.000Z",
-      "updatedAt": "2026-02-03T09:00:00.000Z"
+      "updatedAt": "2026-02-03T09:00:00.000Z",
+      "hasPublicMantras": false
     }
   ]
 }
@@ -144,6 +147,7 @@ When the authenticated user is not an admin (isAdmin=false):
 - The admin middleware checks are performed after authentication middleware
 - Timestamps (createdAt, updatedAt) are automatically managed by Sequelize
 - The emailVerifiedAt field will be null for users who haven't verified their email
+- The hasPublicMantras field indicates whether the user has any mantras with visibility set to "public"
 
 ## GET /admin/mantras
 

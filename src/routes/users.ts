@@ -11,6 +11,7 @@ import {
 import { sendVerificationEmail, sendPasswordResetEmail } from "../modules/emailService";
 import { AppError, ErrorCodes } from "../modules/errorHandler";
 import logger from "../modules/logger";
+import { checkUserHasPublicMantras } from "../modules/userPublicMantras";
 
 const router = Router();
 
@@ -231,6 +232,11 @@ router.post(
         user.email as string
       );
 
+      // Check if user has public mantras
+      const hasPublicMantras = await checkUserHasPublicMantras(
+        user.id as number
+      );
+
       logger.info(`User logged in: ${user.email}`);
 
       res.status(200).json({
@@ -240,6 +246,7 @@ router.post(
           id: user.id,
           email: user.email,
           isAdmin: user.isAdmin,
+          hasPublicMantras,
         },
       });
     } catch (error) {

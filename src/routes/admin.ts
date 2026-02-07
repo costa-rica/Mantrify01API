@@ -8,6 +8,7 @@ import {
 import { authMiddleware } from "../modules/authMiddleware";
 import { AppError, ErrorCodes } from "../modules/errorHandler";
 import logger from "../modules/logger";
+import { checkUserHasPublicMantras } from "../modules/userPublicMantras";
 import fs from "fs";
 import path from "path";
 
@@ -89,12 +90,25 @@ router.get(
         ],
       });
 
+      // Add hasPublicMantras to each user
+      const usersWithPublicMantras = await Promise.all(
+        users.map(async (user) => {
+          const userId = user.get("id") as number;
+          const hasPublicMantras = await checkUserHasPublicMantras(userId);
+
+          return {
+            ...user.get({ plain: true }),
+            hasPublicMantras,
+          };
+        })
+      );
+
       logger.info(
         `Admin user ${req.user?.userId} retrieved ${users.length} users`
       );
 
       res.status(200).json({
-        users,
+        users: usersWithPublicMantras,
       });
     } catch (error: any) {
       logger.error(`Failed to retrieve users: ${error.message}`);

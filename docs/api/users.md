@@ -204,10 +204,21 @@ curl --location 'http://localhost:3000/users/login' \
   "user": {
     "id": 1,
     "email": "user@example.com",
-    "isAdmin": false
+    "isAdmin": false,
+    "hasPublicMantras": true
   }
 }
 ```
+
+### Response Fields
+
+- `message` (string): Success message
+- `accessToken` (string): JWT token for authenticated requests
+- `user` (object): User information
+  - `id` (number): User ID
+  - `email` (string): User email address
+  - `isAdmin` (boolean): Whether user has admin privileges
+  - `hasPublicMantras` (boolean): Whether user has any mantras with visibility set to "public"
 
 ### Error Responses
 
