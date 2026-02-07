@@ -141,15 +141,15 @@ Implement a modular user deletion process that handles file cleanup, database re
 ## PHASE 5: Self-Service Endpoint
 **Implement DELETE /users/me**
 
-- [ ] Open `/src/routes/users.ts`
-- [ ] Import deleteUser module: `import { deleteUser } from "../modules/deleteUser"`
-- [ ] Create DELETE `/me` endpoint
-- [ ] Apply authMiddleware to the endpoint
-- [ ] Extract userId from `req.user.userId` (from JWT token)
-- [ ] Extract `savePublicMantrasAsBenevolentUser` from request body (default: false)
-- [ ] Add log: "User {userId} initiated self-deletion"
-- [ ] Call `await deleteUser(userId, savePublicMantrasAsBenevolentUser)`
-- [ ] Return success response (200):
+- [x] Open `/src/routes/users.ts`
+- [x] Import deleteUser module: `import { deleteUser } from "../modules/deleteUser"`
+- [x] Create DELETE `/me` endpoint
+- [x] Apply authMiddleware to the endpoint
+- [x] Extract userId from `req.user.userId` (from JWT token)
+- [x] Extract `savePublicMantrasAsBenevolentUser` from request body (default: false)
+- [x] Add log: "User {userId} initiated self-deletion"
+- [x] Call `await deleteUser(userId, savePublicMantrasAsBenevolentUser)`
+- [x] Return success response (200):
   ```json
   {
     "message": "Your account has been deleted successfully",
@@ -159,12 +159,12 @@ Implement a modular user deletion process that handles file cleanup, database re
     "benevolentUserCreated": boolean
   }
   ```
-- [ ] Handle errors appropriately:
-  - [ ] 401: Authentication failed
-  - [ ] 500: Internal server error
-- [ ] Add error logging
+- [x] Handle errors appropriately:
+  - [x] 401: Authentication failed
+  - [x] 500: Internal server error
+- [x] Add error logging
 
-**Commit after completing Phase 5**
+**Commit after completing Phase 5** ✅
 
 ---
 

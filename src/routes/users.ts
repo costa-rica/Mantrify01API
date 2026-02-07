@@ -12,6 +12,8 @@ import { sendVerificationEmail, sendPasswordResetEmail } from "../modules/emailS
 import { AppError, ErrorCodes } from "../modules/errorHandler";
 import logger from "../modules/logger";
 import { checkUserHasPublicMantras } from "../modules/userPublicMantras";
+import { deleteUser } from "../modules/deleteUser";
+import { authMiddleware } from "../modules/authMiddleware";
 
 const router = Router();
 
@@ -380,6 +382,56 @@ router.post(
       });
     } catch (error) {
       next(error);
+    }
+  }
+);
+
+// DELETE /users/me
+router.delete(
+  "/me",
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.userId;
+
+      if (!userId) {
+        throw new AppError(
+          ErrorCodes.AUTH_FAILED,
+          "Authentication required",
+          401
+        );
+      }
+
+      // Extract savePublicMantrasAsBenevolentUser from request body (default: false)
+      const savePublicMantrasAsBenevolentUser =
+        req.body.savePublicMantrasAsBenevolentUser === true;
+
+      logger.info(`User ${userId} initiated self-deletion`);
+
+      // Call deleteUser module
+      const result = await deleteUser(userId, savePublicMantrasAsBenevolentUser);
+
+      res.status(200).json({
+        message: "Your account has been deleted successfully",
+        userId: result.userId,
+        mantrasDeleted: result.mantrasDeleted,
+        elevenLabsFilesDeleted: result.elevenLabsFilesDeleted,
+        benevolentUserCreated: result.benevolentUserCreated,
+      });
+    } catch (error: any) {
+      if (error instanceof AppError) {
+        next(error);
+      } else {
+        logger.error(`Failed to delete user ${req.user?.userId}: ${error.message}`);
+        next(
+          new AppError(
+            ErrorCodes.INTERNAL_ERROR,
+            "Failed to delete user account",
+            500,
+            error.message
+          )
+        );
+      }
     }
   }
 );
