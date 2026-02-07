@@ -556,7 +556,6 @@ router.post(
         }
 
         const tables = getAllTables();
-        const tableMap = new Map(tables.map((table) => [table.name, table.model]));
 
         transaction = await sequelize.transaction();
 
@@ -573,26 +572,24 @@ router.post(
           logger.info(`Cleared table: ${name}`);
         }
 
-        for (const csvFile of csvFiles) {
-          const tableName = path.basename(csvFile, ".csv");
-          const model = tableMap.get(tableName);
+        // Import tables in correct dependency order (forward order)
+        for (const { name, model } of tables) {
+          const csvPath = path.join(csvRoot, `${name}.csv`);
 
-          if (!model) {
-            throw new AppError(
-              ErrorCodes.RESTORE_FAILED,
-              `Table ${tableName} does not exist in database`,
-              400,
-            );
+          // Skip if CSV file doesn't exist for this table
+          if (!fs.existsSync(csvPath)) {
+            logger.warn(`CSV file not found for table ${name}, skipping`);
+            rowsImported[name] = 0;
+            continue;
           }
 
-          const csvPath = path.join(csvRoot, csvFile);
           const rowCount = await importCSVToTable(
             csvPath,
-            tableName,
+            name,
             model,
             transaction,
           );
-          rowsImported[tableName] = rowCount;
+          rowsImported[name] = rowCount;
           totalRows += rowCount;
         }
 
